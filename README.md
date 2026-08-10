@@ -1,5 +1,4 @@
 # Online Booking & Payment Portal
-# heyvalerii
 
 A mobile-first Next.js application for a psychology clinic. Clients self-book and pay online; admins manage schedules, appointments, and clinic settings.
 
