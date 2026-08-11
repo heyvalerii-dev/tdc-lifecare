@@ -31,11 +31,20 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  const publicPaths = ["/", "/login", "/signup", "/auth/callback", "/book"];
+  const publicPaths = [
+    "/",
+    "/login",
+    "/signup",
+    "/auth/callback",
+    "/book",
+    "/preview-login",
+  ];
   const isPublicPath =
     publicPaths.includes(path) ||
     path.startsWith("/pay/") ||
     path.startsWith("/api/webhooks") ||
+    path.startsWith("/api/cron") ||
+    path.startsWith("/api/preview-login") ||
     path.startsWith("/api/slots") ||
     path.startsWith("/api/dates");
 
