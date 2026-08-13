@@ -22,8 +22,9 @@ export function PayMongoSandboxBanner({ className }: PayMongoSandboxBannerProps)
   return (
     <div
       className={cn(
-        // Pull 1px over the header bottom border so chrome reads as one unit.
-        "relative z-[51] -mt-px w-full border-b border-[#F3D37A] bg-[#FFF8E5]",
+        // -mt-px tucks under the header edge. Do not raise z-index above the
+        // sticky header (z-50) — that would cover header dropdowns/menus.
+        "relative -mt-px w-full border-b border-[#F3D37A] bg-[#FFF8E5]",
         className
       )}
       role="status"
