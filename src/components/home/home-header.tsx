@@ -45,15 +45,6 @@ export function HomeHeader({ bookingFlow = false, immersive = false }: HomeHeade
       <BrandLogo href="/" variant="dark" />
 
       <nav className="flex shrink-0 items-center gap-4">
-        <Link
-          href="/login"
-          className={cn(
-            type.nav,
-            "inline-flex min-h-11 items-center text-[var(--brand-text-muted)] transition-colors hover:text-[var(--brand-text)]"
-          )}
-        >
-          Sign in
-        </Link>
         {bookingFlow ? (
           <button
             type="button"
@@ -66,7 +57,18 @@ export function HomeHeader({ bookingFlow = false, immersive = false }: HomeHeade
             Start over
           </button>
         ) : (
-          <BookingCta size="compact" className="hidden sm:inline-flex" />
+          <>
+            <Link
+              href="/login"
+              className={cn(
+                type.nav,
+                "inline-flex min-h-11 items-center text-[var(--brand-text-muted)] transition-colors hover:text-[var(--brand-text)]"
+              )}
+            >
+              Sign in
+            </Link>
+            <BookingCta size="compact" className="hidden sm:inline-flex" />
+          </>
         )}
       </nav>
     </div>
