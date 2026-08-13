@@ -58,11 +58,13 @@ Fill in your Supabase and PayMongo credentials.
 
 ### 4. Create an admin user
 
-After signing up, promote a user to admin in the Supabase SQL editor:
+After signing up, promote the first user to admin in the Supabase SQL editor:
 
 ```sql
 UPDATE profiles SET role = 'admin' WHERE email = 'your@email.com';
 ```
+
+Additional administrators can be granted access from Clinic Settings → Staff & Access.
 
 ### 5. Run the dev server
 
