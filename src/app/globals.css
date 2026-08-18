@@ -12,6 +12,9 @@
   --brand-yellow: #f2d049;
   --brand-yellow-light: #faf3dc;
   --brand-yellow-dark: #9a7b1a;
+  /* Sage olive — sits between warm yellow-dark and muted purple */
+  --brand-success: #657a63;
+  --brand-success-light: #eef3eb;
   --brand-cream: #faf8fc;
   --brand-text: #2d2640;
   --brand-text-muted: #6b6280;
