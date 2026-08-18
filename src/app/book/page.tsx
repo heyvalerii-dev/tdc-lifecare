@@ -18,7 +18,7 @@ export default async function BookPage({
   }>;
 }) {
   const params = await searchParams;
-  const { psychologists, questionnaire } = await getBookingPageData();
+  const { psychologists, questionnaire, workingDays } = await getBookingPageData();
   const preselectedPsychologistId = resolvePsychologistId(
     params.psychologist,
     psychologists
@@ -42,6 +42,7 @@ export default async function BookPage({
             psychologists={psychologists}
             questionnaire={questionnaire}
             preselectedPsychologistId={preselectedPsychologistId}
+            workingDays={workingDays}
           />
         </Suspense>
       </main>

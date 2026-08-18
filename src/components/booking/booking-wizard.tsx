@@ -24,6 +24,11 @@ import { type } from "@/lib/typography";
 import { cn, formatCurrency, formatDuration } from "@/lib/utils";
 import { CLINIC_TIMEZONE } from "@/lib/constants";
 import { saveBookingDraft, loadBookingDraft, clearBookingDraft } from "@/lib/booking-draft";
+import { fetchAvailableSlots, isAbortError } from "@/lib/fetch-available-slots";
+import {
+  DEFAULT_CLINIC_WORKING_DAYS,
+  clinicClosedDateMessage,
+} from "@/lib/clinic-working-days";
 import { CHECKOUT_START_ERROR } from "@/lib/payments/client";
 import { resolvePsychologistId } from "@/lib/psychologist-slugs";
 import { createClient } from "@/lib/supabase/client";
@@ -37,6 +42,7 @@ interface BookingWizardProps {
   questionnaire: Questionnaire | null;
   preselectedPsychologistId?: string | null;
   bypassRules?: boolean;
+  workingDays?: number[];
 }
 
 const AUTO_ADVANCE_MS = 175;
@@ -86,6 +92,7 @@ export function BookingWizard({
   questionnaire,
   preselectedPsychologistId = null,
   bypassRules = false,
+  workingDays = [...DEFAULT_CLINIC_WORKING_DAYS],
 }: BookingWizardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -107,6 +114,8 @@ export function BookingWizard({
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [responses, setResponses] = useState<Record<string, string | boolean>>({});
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [slotsError, setSlotsError] = useState<string | null>(null);
+  const [slotsLoadedDate, setSlotsLoadedDate] = useState<string | null>(null);
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const [endAt, setEndAt] = useState<string | null>(null);
   const [pendingPaymentCheckId, setPendingPaymentCheckId] = useState<string | null>(
@@ -116,8 +125,12 @@ export function BookingWizard({
   const timeSlotsRef = useRef<HTMLDivElement>(null);
   const scrollToSlotsAfterLoadRef = useRef(false);
   const bootstrappedRef = useRef(false);
+  const slotsAbortRef = useRef<AbortController | null>(null);
+  const selectedDateRef = useRef<string | null>(null);
+  selectedDateRef.current = selectedDate;
   const [highlightTimeSlots, setHighlightTimeSlots] = useState(false);
   const [pendingCancelledReturn, setPendingCancelledReturn] = useState(false);
+  const [navigatingToAppointment, setNavigatingToAppointment] = useState(false);
 
   const {
     phase: checkoutPhase,
@@ -130,10 +143,10 @@ export function BookingWizard({
   } = useCheckoutPayment({
     appointmentId,
     returnTo: "book",
-    onConfirmed: () => {
+    onConfirmed: (confirmedAppointmentId) => {
       clearBookingDraft();
-      setStep(6);
-      router.replace("/book");
+      setNavigatingToAppointment(true);
+      router.replace(`/client/appointments/${confirmedAppointmentId}`);
     },
   });
 
@@ -244,9 +257,9 @@ export function BookingWizard({
   }, [preselectedPsychologistId, psychologists, searchParams, supabase.auth]);
 
   useEffect(() => {
-    if (!initialized) return;
+    if (!initialized || navigatingToAppointment) return;
     persistDraft();
-  }, [initialized, persistDraft]);
+  }, [initialized, persistDraft, navigatingToAppointment]);
 
   useEffect(() => {
     if (!pendingPaymentCheckId) return;
@@ -287,34 +300,70 @@ export function BookingWizard({
     }
   }, [psychologistId, serviceId, step, bypassRules]);
 
-  useEffect(() => {
-    if (step === 2 && selectedDate && psychologistId && serviceId && slots.length === 0 && !loadingSlots) {
-      loadSlots(selectedDate);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only restore slots when calendar mounts with a saved date
-  }, [step, selectedDate, psychologistId, serviceId, slots.length, loadingSlots]);
+  const loadSlots = useCallback(
+    async (date: string) => {
+      if (!psychologistId || !serviceId) return;
 
-  async function loadSlots(date: string) {
-    if (!psychologistId || !serviceId) return;
-    const dateChanged = date !== selectedDate;
-    setLoadingSlots(true);
-    setSelectedDate(date);
-    if (dateChanged) setSelectedSlot(null);
-    const params = new URLSearchParams({
-      psychologist_id: psychologistId,
-      service_id: serviceId,
-      date,
-      ...(bypassRules ? { bypass: "true" } : {}),
-    });
-    const res = await fetch(`/api/slots?${params}`);
-    const result = await res.json();
-    setSlots(Array.isArray(result) ? result : []);
-    setLoadingSlots(false);
-  }
+      slotsAbortRef.current?.abort();
+      const controller = new AbortController();
+      slotsAbortRef.current = controller;
+
+      setLoadingSlots(true);
+      setSlotsError(null);
+
+      try {
+        const result = await fetchAvailableSlots({
+          psychologistId,
+          serviceId,
+          date,
+          bypassRules,
+          signal: controller.signal,
+        });
+        if (controller.signal.aborted || date !== selectedDateRef.current) return;
+        setSlots(result);
+        setSlotsLoadedDate(date);
+        setSlotsError(null);
+      } catch (error) {
+        if (isAbortError(error) || controller.signal.aborted) return;
+        if (date !== selectedDateRef.current) return;
+        setSlots([]);
+        setSlotsLoadedDate(date);
+        setSlotsError("Couldn't load available times. Please try again.");
+      } finally {
+        if (!controller.signal.aborted && date === selectedDateRef.current) {
+          setLoadingSlots(false);
+        }
+      }
+    },
+    [psychologistId, serviceId, bypassRules]
+  );
+
+  useEffect(() => {
+    return () => {
+      slotsAbortRef.current?.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (step !== 2 || !selectedDate || !psychologistId || !serviceId) return;
+    if (slotsLoadedDate === selectedDate) return;
+    void loadSlots(selectedDate);
+  }, [step, selectedDate, psychologistId, serviceId, slotsLoadedDate, loadSlots]);
 
   function handleDateSelect(date: string) {
     scrollToSlotsAfterLoadRef.current = true;
-    loadSlots(date);
+    if (date !== selectedDate) {
+      setSelectedSlot(null);
+      setSlots([]);
+      setSlotsError(null);
+      setSlotsLoadedDate(null);
+    }
+    setSelectedDate(date);
+  }
+
+  function handleRetrySlots() {
+    if (!selectedDate) return;
+    setSlotsLoadedDate(null);
   }
 
   useEffect(() => {
@@ -395,6 +444,9 @@ export function BookingWizard({
     setServiceId(null);
     setSelectedDate(null);
     setSelectedSlot(null);
+    setSlots([]);
+    setSlotsError(null);
+    setSlotsLoadedDate(null);
 
     if (step === 0) {
       window.setTimeout(() => setStep(1), AUTO_ADVANCE_MS);
@@ -405,6 +457,9 @@ export function BookingWizard({
     setServiceId(id);
     setSelectedDate(null);
     setSelectedSlot(null);
+    setSlots([]);
+    setSlotsError(null);
+    setSlotsLoadedDate(null);
 
     if (step === 1) {
       window.setTimeout(() => setStep(2), AUTO_ADVANCE_MS);
@@ -552,6 +607,7 @@ export function BookingWizard({
   }
 
   if (
+    navigatingToAppointment ||
     checkoutPhase === "checking" ||
     (searchParams.get("confirmed") && checkoutPhase === "idle" && step === 5)
   ) {
@@ -662,9 +718,22 @@ export function BookingWizard({
                   <p className={cn(type.bodyMuted, "text-center sm:text-left")}>
                     Loading available times...
                   </p>
+                ) : slotsError ? (
+                  <div className="space-y-3 text-center sm:text-left">
+                    <p className={type.bodyMuted}>{slotsError}</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRetrySlots}
+                    >
+                      Try again
+                    </Button>
+                  </div>
                 ) : slots.length === 0 ? (
                   <p className={cn(type.bodyMuted, "text-center sm:text-left")}>
-                    No available times for this date. Try another day.
+                    {clinicClosedDateMessage(selectedDate, workingDays)
+                      ? "The clinic is closed on this day."
+                      : "No available times for this date. Try another day."}
                   </p>
                 ) : (
                   <div className="space-y-8">

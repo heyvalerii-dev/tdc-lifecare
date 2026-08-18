@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getClinicSettings } from "@/lib/clinic-settings";
+import { getClinicWorkingDays } from "@/lib/clinic-working-days";
 import { PSYCHOLOGIST_SLUGS, resolvePsychologistId } from "@/lib/psychologist-slugs";
 import type { Psychologist, Service, Questionnaire } from "@/types/database";
 
@@ -7,7 +8,7 @@ export { PSYCHOLOGIST_SLUGS, resolvePsychologistId };
 
 export async function getBookingPageData() {
   const supabase = await createClient();
-  await getClinicSettings();
+  const settings = await getClinicSettings();
 
   const [{ data: psychologists }, { data: psLinks }, { data: services }, { data: questionnaire }] =
     await Promise.all([
@@ -30,5 +31,6 @@ export async function getBookingPageData() {
   return {
     psychologists: psychologistsWithServices,
     questionnaire: (questionnaire as Questionnaire) ?? null,
+    workingDays: getClinicWorkingDays(settings),
   };
 }

@@ -20,7 +20,7 @@ interface UseCheckoutPaymentOptions {
   appointmentId: string | null;
   returnTo: "book" | "pay";
   /** Called when server reports paid + confirmed (webhook / demo sim). */
-  onConfirmed: () => void | Promise<void>;
+  onConfirmed: (appointmentId: string) => void | Promise<void>;
   /** Poll timeout (default 60s). */
   timeoutMs?: number;
   /** Poll interval (default 2s). */
@@ -70,8 +70,8 @@ export function useCheckoutPayment({
       if (result.status === "aborted") return;
 
       if (result.status === "confirmed") {
+        await onConfirmedRef.current(id);
         setPhase("idle");
-        await onConfirmedRef.current();
         return;
       }
 
