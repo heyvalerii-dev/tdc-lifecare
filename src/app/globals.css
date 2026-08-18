@@ -26,6 +26,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --animate-page-loading-orbit: page-loading-orbit 1.4s ease-in-out infinite;
 }
 
 .font-heading {
@@ -102,5 +103,59 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .hero-illustration-breathe {
     animation: none;
+  }
+}
+
+/* Generic page loading — two brand dots in a calm orbit */
+.page-loading-dot {
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  min-width: 7px;
+  min-height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.page-loading-dot-purple {
+  background-color: var(--brand-purple);
+  animation: page-loading-orbit 1.4s ease-in-out infinite;
+}
+
+.page-loading-dot-yellow {
+  background-color: var(--brand-yellow);
+  animation: page-loading-orbit 1.4s ease-in-out infinite;
+  animation-delay: -0.7s;
+}
+
+@keyframes page-loading-orbit {
+  0%,
+  100% {
+    transform: translate(9px, 1px) scale(1);
+  }
+  25% {
+    transform: translate(1px, 8px) scale(0.9);
+  }
+  50% {
+    transform: translate(-9px, -1px) scale(1);
+  }
+  75% {
+    transform: translate(-1px, -8px) scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-loading-dot-purple {
+    animation: none;
+    transform: translate(-6px, 0);
+  }
+
+  .page-loading-dot-yellow {
+    animation: none;
+    transform: translate(6px, 0);
   }
 }

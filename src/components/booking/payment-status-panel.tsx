@@ -1,7 +1,7 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageLoadingState } from "@/components/ui/page-loading-state";
 import { type } from "@/lib/typography";
 import { cn } from "@/lib/utils";
 
@@ -23,30 +23,7 @@ export function PaymentStatusPanel({
   className,
 }: PaymentStatusPanelProps) {
   if (variant === "checking") {
-    return (
-      <div
-        className={cn(
-          "flex flex-col items-center gap-4 rounded-xl border border-[var(--brand-purple)]/10 bg-white px-6 py-10 text-center",
-          className
-        )}
-        role="status"
-        aria-live="polite"
-      >
-        <Loader2
-          className="h-8 w-8 animate-spin text-[var(--brand-purple)]"
-          strokeWidth={1.75}
-          aria-hidden
-        />
-        <div className="space-y-2">
-          <p className="font-heading text-lg font-semibold text-[var(--brand-text)]">
-            Confirming your payment...
-          </p>
-          <p className={cn(type.smallMuted, "mx-auto max-w-sm text-sm leading-relaxed")}>
-            Please wait while we confirm your payment. Don&apos;t close this page.
-          </p>
-        </div>
-      </div>
-    );
+    return <PageLoadingState className={className} />;
   }
 
   const title =

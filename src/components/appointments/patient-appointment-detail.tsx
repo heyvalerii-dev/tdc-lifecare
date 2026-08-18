@@ -17,6 +17,7 @@ import { AuthAlert } from "@/components/auth/auth-alert";
 import { PatientStatusPill } from "@/components/appointments/patient-status-pill";
 import { patientCardClass, patientCardInner } from "@/components/appointments/patient-styles";
 import { PaymentStatusPanel } from "@/components/booking/payment-status-panel";
+import { PageLoadingState } from "@/components/ui/page-loading-state";
 import { SandboxPaymentAlert } from "@/components/payments/sandbox-payment-alert";
 import { Button } from "@/components/ui/button";
 import { useCheckoutPayment } from "@/hooks/use-checkout-payment";
@@ -185,6 +186,13 @@ export function PatientAppointmentDetail({
     await beginCheckout();
   }
 
+  if (
+    checkoutPhase === "checking" ||
+    (searchParams.get("success") === "true" && checkoutPhase === "idle" && !isPaid)
+  ) {
+    return <PageLoadingState />;
+  }
+
   return (
     <div>
       {showBackLink && (
@@ -230,10 +238,6 @@ export function PatientAppointmentDetail({
               Your appointment is confirmed. We look forward to seeing you.
             </p>
           </div>
-        )}
-
-        {checkoutPhase === "checking" && (
-          <PaymentStatusPanel variant="checking" />
         )}
 
         {checkoutPhase === "cancelled" && !isPaid && (

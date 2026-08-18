@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { PageLoadingState } from "@/components/ui/page-loading-state";
 import { PaymentStatusPanel } from "@/components/booking/payment-status-panel";
 import { ShareablePaymentSuccess } from "@/components/payments/shareable-payment-success";
 import { pollPaymentStatus } from "@/lib/payments/client";
@@ -52,9 +53,5 @@ export function ShareablePaymentConfirming({
     );
   }
 
-  return (
-    <div className="mx-auto w-full max-w-lg py-8 sm:py-12">
-      <PaymentStatusPanel variant="checking" />
-    </div>
-  );
+  return <PageLoadingState />;
 }

@@ -10,6 +10,7 @@ import {
   ShareablePaymentSuccess,
   ShareablePaymentUnavailable,
 } from "@/components/payments/shareable-payment-success";
+import { PageLoadingState } from "@/components/ui/page-loading-state";
 import { cn } from "@/lib/utils";
 import type { AppointmentWithRelations } from "@/types/database";
 
@@ -55,8 +56,8 @@ function PayChrome({
       <div className={cn(homeContainer, "flex flex-1 flex-col px-5 py-12 sm:px-8 sm:py-14")}>
         <div
           className={cn(
-            "mx-auto w-full max-w-4xl",
-            centered && "flex flex-1 flex-col justify-center"
+            "mx-auto flex w-full max-w-4xl flex-1 flex-col",
+            centered && "justify-center"
           )}
         >
           {children}
@@ -123,9 +124,7 @@ export default async function PayPage({
 
     return (
       <PayChrome>
-        <Suspense
-          fallback={<p className="text-[var(--brand-text-muted)]">Loading…</p>}
-        >
+        <Suspense fallback={<PageLoadingState />}>
           <PatientAppointmentDetail
             appointment={
               { ...appointment, payment } as AppointmentWithRelations

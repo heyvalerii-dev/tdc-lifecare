@@ -3,7 +3,8 @@ import { HomeHeader } from "@/components/home/home-header";
 import { getBookingPageData, resolvePsychologistId } from "@/lib/booking-data";
 import { BookingWizard } from "@/components/booking/booking-wizard";
 import { homeContainer } from "@/components/home/home-styles";
-import { type } from "@/lib/typography";
+import { PageLoadingState } from "@/components/ui/page-loading-state";
+import { cn } from "@/lib/utils";
 
 export default async function BookPage({
   searchParams,
@@ -23,12 +24,20 @@ export default async function BookPage({
     psychologists
   );
 
+  const returningFromPayment = Boolean(params.confirmed);
+
   return (
-    <div className="min-h-screen bg-[var(--brand-cream)]">
+    <div className="flex min-h-screen flex-col bg-[var(--brand-cream)]">
       <HomeHeader bookingFlow />
 
-      <main className={`${homeContainer} px-5 py-12 sm:px-8 sm:py-14`}>
-        <Suspense fallback={<p className={type.bodyMuted}>Loading...</p>}>
+      <main
+        className={cn(
+          homeContainer,
+          "flex flex-1 flex-col px-5 sm:px-8",
+          returningFromPayment ? "py-0" : "py-12 sm:py-14"
+        )}
+      >
+        <Suspense fallback={<PageLoadingState />}>
           <BookingWizard
             psychologists={psychologists}
             questionnaire={questionnaire}

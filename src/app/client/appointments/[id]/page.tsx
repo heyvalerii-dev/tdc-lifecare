@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PatientAppointmentDetail } from "@/components/appointments/patient-appointment-detail";
 import { homeContainer } from "@/components/home/home-styles";
+import { PageLoadingState } from "@/components/ui/page-loading-state";
 import { cn } from "@/lib/utils";
 import type { AppointmentWithRelations } from "@/types/database";
 
@@ -39,7 +40,7 @@ export default async function AppointmentDetailPage({
   return (
     <div className={cn(homeContainer, "px-5 py-12 sm:px-8 sm:py-14")}>
       <div className="mx-auto max-w-4xl">
-        <Suspense fallback={<p className="text-[var(--brand-text-muted)]">Loading…</p>}>
+        <Suspense fallback={<PageLoadingState />}>
           <PatientAppointmentDetail
             appointment={{ ...appointment, payment } as AppointmentWithRelations}
             paymentUrl={paymentUrl}

@@ -16,6 +16,7 @@ import { BookingConfirmation } from "@/components/booking/booking-confirmation";
 import { BookingPaymentQr } from "@/components/booking/booking-payment-qr";
 import { BookingReserveSummary } from "@/components/booking/booking-reserve-summary";
 import { PaymentStatusPanel } from "@/components/booking/payment-status-panel";
+import { PageLoadingState } from "@/components/ui/page-loading-state";
 import { PsychologistCard } from "@/components/home/psychologist-card";
 import { useCheckoutPayment } from "@/hooks/use-checkout-payment";
 import { getPsychologistDisplay } from "@/lib/psychologist-display";
@@ -547,7 +548,14 @@ export function BookingWizard({
   }
 
   if (!initialized) {
-    return <p className={type.bodyMuted}>Loading...</p>;
+    return <PageLoadingState />;
+  }
+
+  if (
+    checkoutPhase === "checking" ||
+    (searchParams.get("confirmed") && checkoutPhase === "idle" && step === 5)
+  ) {
+    return <PageLoadingState />;
   }
 
   const { morning, afternoon } = groupSlotsByPeriod(slots);
@@ -724,9 +732,7 @@ export function BookingWizard({
             currentStep={progressStep}
           />
           <div className="mx-auto max-w-2xl space-y-8">
-            {checkoutPhase === "checking" ? (
-              <PaymentStatusPanel variant="checking" />
-            ) : checkoutPhase === "cancelled" ? (
+            {checkoutPhase === "cancelled" ? (
               <PaymentStatusPanel
                 variant="cancelled"
                 onRetry={() => {

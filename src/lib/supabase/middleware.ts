@@ -38,6 +38,7 @@ export async function updateSession(request: NextRequest) {
     "/auth/callback",
     "/book",
     "/preview-login",
+    "/test/loading",
   ];
   const isPublicPath =
     publicPaths.includes(path) ||
