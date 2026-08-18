@@ -14,6 +14,9 @@ import { cn } from "@/lib/utils";
 
 const authBtn = "h-auto w-full justify-center gap-3 py-3.5";
 
+/** Set to true when Facebook OAuth is configured in Supabase Auth. */
+const FACEBOOK_SIGN_IN_ENABLED = false;
+
 interface BookingAuthStepProps {
   onAuthenticated: () => void;
 }
@@ -155,15 +158,17 @@ export function BookingAuthStep({ onAuthenticated }: BookingAuthStepProps) {
             <GoogleIcon />
             Continue with Google
           </Button>
-          <Button
-            onClick={handleFacebook}
-            disabled={loading}
-            variant="outline"
-            className={authBtn}
-          >
-            <FacebookIcon />
-            Continue with Facebook
-          </Button>
+          {FACEBOOK_SIGN_IN_ENABLED && (
+            <Button
+              onClick={handleFacebook}
+              disabled={loading}
+              variant="outline"
+              className={authBtn}
+            >
+              <FacebookIcon />
+              Continue with Facebook
+            </Button>
+          )}
           <Button
             onClick={() => setMode("email-signin")}
             disabled={loading}
