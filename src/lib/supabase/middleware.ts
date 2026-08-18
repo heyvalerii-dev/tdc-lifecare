@@ -45,6 +45,7 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/api/webhooks") ||
     path.startsWith("/api/cron") ||
     path.startsWith("/api/preview-login") ||
+    path.startsWith("/api/payments/config") ||
     path.startsWith("/api/slots") ||
     path.startsWith("/api/dates");
 
