@@ -874,7 +874,7 @@ export function BookingWizard({
         </div>
       )}
 
-      {step < 6 && step !== 0 && checkoutPhase !== "checking" && (
+      {step < 6 && step !== 0 && (
         <BookingActionBar>
           <BookingBackLink
             onClick={() => setStep(step - 1)}
