@@ -100,11 +100,11 @@ export function HomeHeader({ bookingFlow = false, immersive = false }: HomeHeade
   }
 
   return (
-    <>
-      <header className="sticky top-0 z-50 border-b border-[var(--brand-border)] bg-white">
+    <div className="sticky top-0 z-50 bg-white">
+      <header className="border-b border-[var(--brand-border)] bg-white">
         {navBar}
       </header>
       <PayMongoSandboxBanner />
-    </>
+    </div>
   );
 }

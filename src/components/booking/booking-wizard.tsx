@@ -16,7 +16,6 @@ import { BookingConfirmation } from "@/components/booking/booking-confirmation";
 import { BookingPaymentQr } from "@/components/booking/booking-payment-qr";
 import { BookingReserveSummary } from "@/components/booking/booking-reserve-summary";
 import { PaymentStatusPanel } from "@/components/booking/payment-status-panel";
-import { SandboxPaymentAlert } from "@/components/payments/sandbox-payment-alert";
 import { PsychologistCard } from "@/components/home/psychologist-card";
 import { useCheckoutPayment } from "@/hooks/use-checkout-payment";
 import { getPsychologistDisplay } from "@/lib/psychologist-display";
@@ -829,8 +828,6 @@ export function BookingWizard({
             checkoutPhase !== "cancelled" &&
             checkoutPhase !== "timeout" &&
             checkoutPhase !== "error" && (
-            <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:items-end">
-              <SandboxPaymentAlert className="w-full sm:max-w-sm" />
               <Button
                 onClick={handlePay}
                 loading={paymentBusy}
@@ -839,7 +836,6 @@ export function BookingWizard({
               >
                 {paymentBusy ? "Redirecting to PayMongo…" : "Pay securely"}
               </Button>
-            </div>
           )}
         </BookingActionBar>
       )}
