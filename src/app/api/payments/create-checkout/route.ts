@@ -20,14 +20,10 @@ function resolveReturnTo(value: unknown): ReturnTo {
 export async function POST(request: Request) {
   logPaymentsModeOnce();
 
-  const supabase = await createClient();
+  const authClient = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  } = await authClient.auth.getUser();
 
   let body: { appointment_id?: string; return_to?: string };
   try {
@@ -47,14 +43,23 @@ export async function POST(request: Request) {
 
   const returnTo = resolveReturnTo(body.return_to);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  // Booking checkout stays login-required. Shareable /pay links may start
+  // checkout without a session — the appointment UUID is the capability.
+  if (!user && returnTo !== "pay") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  const isAdmin = profile?.role === "admin";
+  let isAdmin = false;
+  if (user) {
+    const { data: profile } = await authClient
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    isAdmin = profile?.role === "admin";
+  }
 
+  const supabase = await createServiceClient();
   const { data: appointment, error: appointmentError } = await supabase
     .from("appointments")
     .select(
@@ -63,21 +68,20 @@ export async function POST(request: Request) {
     .eq("id", appointmentId)
     .maybeSingle();
 
-  if (appointmentError) {
-    return NextResponse.json(
-      { error: appointmentError.message },
-      { status: 500 }
-    );
-  }
-
-  if (!appointment) {
+  if (appointmentError || !appointment) {
     return NextResponse.json(
       { error: "Appointment not found" },
       { status: 404 }
     );
   }
 
-  if (!isAdmin && appointment.client_id !== user.id) {
+  // Logged-in booking checkout is still owner/admin only.
+  // Shareable /pay checkout is allowed with a valid pending appointment id.
+  if (
+    returnTo === "book" &&
+    !isAdmin &&
+    appointment.client_id !== user?.id
+  ) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -164,10 +168,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const serviceClient = await createServiceClient();
     const now = new Date().toISOString();
 
-    await serviceClient
+    await supabase
       .from("payments")
       .update({
         status: "paid",
@@ -180,16 +183,16 @@ export async function POST(request: Request) {
       .eq("id", paymentRow.id)
       .eq("status", "pending");
 
-    await serviceClient
+    await supabase
       .from("appointments")
       .update({ status: "confirmed", updated_at: now })
       .eq("id", appointmentId)
       .eq("status", "pending_payment");
 
-    await logActivity(serviceClient, {
+    await logActivity(supabase, {
       entityType: "appointment",
       entityId: appointmentId,
-      actorId: user.id,
+      actorId: user?.id ?? null,
       actorType: isAdmin ? "admin" : "client",
       action: "payment_confirmed",
       source: isAdmin ? "Admin Panel" : "Online Booking",
@@ -260,7 +263,6 @@ export async function POST(request: Request) {
   // Persist checkout ID with service role (clients cannot UPDATE payments under RLS).
   // Retry overwrites paymongo_checkout_id with the latest session; prior IDs are kept in
   // metadata so ops can reconcile, and webhooks fall back to metadata.payment_id.
-  const serviceClient = await createServiceClient();
   const now = new Date().toISOString();
   const priorMeta =
     paymentRow &&
@@ -282,7 +284,7 @@ export async function POST(request: Request) {
     priorCheckoutIds.push(paymentRow.paymongo_checkout_id);
   }
 
-  const { data: updatedPayment, error: updateError } = await serviceClient
+  const { data: updatedPayment, error: updateError } = await supabase
     .from("payments")
     .update({
       paymongo_checkout_id: checkoutId,
@@ -318,10 +320,10 @@ export async function POST(request: Request) {
     );
   }
 
-  await logActivity(serviceClient, {
+  await logActivity(supabase, {
     entityType: "appointment",
     entityId: appointmentId,
-    actorId: user.id,
+    actorId: user?.id ?? null,
     actorType: isAdmin ? "admin" : "client",
     action: "checkout_created",
     source: isAdmin ? "Admin Panel" : "Online Booking",

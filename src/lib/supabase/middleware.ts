@@ -46,6 +46,9 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/api/cron") ||
     path.startsWith("/api/preview-login") ||
     path.startsWith("/api/payments/config") ||
+    path === "/api/payments/create-checkout" ||
+    (path.startsWith("/api/appointments/") &&
+      path.endsWith("/payment-status")) ||
     path.startsWith("/api/slots") ||
     path.startsWith("/api/dates");
 
