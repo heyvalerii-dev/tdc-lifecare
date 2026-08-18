@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { BookingConfirmationCard } from "@/components/booking/booking-confirmation-card";
 import { downloadIcsFile, generateIcsEvent } from "@/lib/calendar";
 import { formatClinicDateTime } from "@/lib/datetime";
@@ -61,8 +60,15 @@ export function BookingConfirmation({
     URL.revokeObjectURL(url);
   }
 
+  const actionClass = cn(
+    type.nav,
+    "inline-flex min-h-11 items-center justify-center gap-2 px-4",
+    "text-[var(--brand-purple)] transition-colors hover:text-[var(--brand-purple-dark)]",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-purple)] focus-visible:ring-offset-2"
+  );
+
   return (
-    <div className="space-y-10">
+    <div>
       <div className="space-y-5 text-center">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[var(--brand-purple)]/15 bg-[var(--brand-purple-light)]/60 text-[var(--brand-purple)]">
           <Check className="h-7 w-7" strokeWidth={2} />
@@ -75,30 +81,37 @@ export function BookingConfirmation({
         </div>
       </div>
 
-      <BookingConfirmationCard
-        psychologist={psychologist}
-        service={service}
-        selectedSlot={selectedSlot}
-      />
+      <div className="mt-8">
+        <BookingConfirmationCard
+          psychologist={psychologist}
+          service={service}
+          selectedSlot={selectedSlot}
+        />
+      </div>
 
-      <div className="space-y-3 border-t border-[var(--brand-border)] pt-8">
-        <p className={cn(type.smallMuted, "text-center text-sm")}>Helpful next steps</p>
-        <div className="grid gap-2.5 sm:grid-cols-2">
-          <Button variant="outline" onClick={handleAddToCalendar} className="w-full">
-            <CalendarPlus className="h-4 w-4" />
-            Add to Calendar
-          </Button>
-          <Button variant="outline" onClick={handleDownloadReceipt} className="w-full">
-            <Download className="h-4 w-4" />
-            Download Receipt
-          </Button>
+      <div className="mt-4 sm:mt-5">
+        <div
+          className={cn(
+            "mx-auto flex max-w-lg flex-col items-stretch",
+            "divide-y divide-[var(--brand-border)]",
+            "sm:max-w-none sm:flex-row sm:items-center sm:justify-center sm:divide-x sm:divide-y-0 sm:divide-[var(--brand-purple)]/15"
+          )}
+        >
+          <Link href="/client/dashboard" className={actionClass}>
+            <Calendar className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+            View Appointments
+          </Link>
+          <button type="button" onClick={handleDownloadReceipt} className={actionClass}>
+            <Download className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+            <span className="sm:hidden">Download Receipt</span>
+            <span className="hidden sm:inline">Receipt</span>
+          </button>
+          <button type="button" onClick={handleAddToCalendar} className={actionClass}>
+            <CalendarPlus className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+            <span className="sm:hidden">Add to Calendar</span>
+            <span className="hidden sm:inline">Calendar</span>
+          </button>
         </div>
-        <Link href="/client/dashboard" className="block pt-1">
-          <Button variant="ghost" className="w-full text-[var(--brand-purple)] hover:bg-[var(--brand-purple-light)]/50">
-            <Calendar className="h-4 w-4" />
-            View Upcoming Appointments
-          </Button>
-        </Link>
       </div>
     </div>
   );
