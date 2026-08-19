@@ -11,6 +11,7 @@ import { BookingAuthStep } from "@/components/booking/booking-auth-step";
 import { BookingBackLink } from "@/components/booking/booking-back-link";
 import { BookingScheduleCalendar } from "@/components/booking/booking-schedule-calendar";
 import { BookingScheduleSummary } from "@/components/booking/booking-schedule-summary";
+import { BookingClinicClosedNotice } from "@/components/booking/booking-clinic-closed-notice";
 import { BookingStepIntro } from "@/components/booking/booking-progress";
 import { BookingConfirmation } from "@/components/booking/booking-confirmation";
 import { BookingPaymentQr } from "@/components/booking/booking-payment-qr";
@@ -24,12 +25,16 @@ import { type } from "@/lib/typography";
 import { cn, formatCurrency, formatDuration } from "@/lib/utils";
 import { CLINIC_TIMEZONE } from "@/lib/constants";
 import { saveBookingDraft, loadBookingDraft, clearBookingDraft } from "@/lib/booking-draft";
+import {
+  bookingResumeUnavailableMessage,
+  decideBookingResume,
+} from "@/lib/booking-resume";
+import { CHECKOUT_START_ERROR, fetchPaymentStatus } from "@/lib/payments/client";
 import { fetchAvailableSlots, isAbortError } from "@/lib/fetch-available-slots";
 import {
   DEFAULT_CLINIC_WORKING_DAYS,
-  clinicClosedDateMessage,
+  isClinicWorkingDate,
 } from "@/lib/clinic-working-days";
-import { CHECKOUT_START_ERROR } from "@/lib/payments/client";
 import { resolvePsychologistId } from "@/lib/psychologist-slugs";
 import { createClient } from "@/lib/supabase/client";
 import type { Psychologist, Service, Questionnaire, QuestionField } from "@/types/database";
@@ -238,13 +243,42 @@ export function BookingWizard({
       const draft = loadBookingDraft();
 
       if (resume && draft) {
+        if (draft.appointmentId) {
+          try {
+            const snapshot = await fetchPaymentStatus(draft.appointmentId);
+            const action = decideBookingResume(snapshot);
+
+            if (action.type === "redirect_to_appointment") {
+              clearBookingDraft();
+              setNavigatingToAppointment(true);
+              setInitialized(true);
+              router.replace(`/client/appointments/${draft.appointmentId}`);
+              return;
+            }
+
+            if (action.type === "unavailable") {
+              clearBookingDraft();
+              setError(bookingResumeUnavailableMessage(action.reason));
+              setInitialized(true);
+              return;
+            }
+          } catch {
+            clearBookingDraft();
+            setError("Couldn't load your booking. Please try again.");
+            setInitialized(true);
+            return;
+          }
+        }
+
         setPsychologistId(draft.psychologistId);
         setServiceId(draft.serviceId);
         setSelectedDate(draft.selectedDate);
         setSelectedSlot(draft.selectedSlot);
         setResponses(draft.responses ?? {});
         setAppointmentId(draft.appointmentId ?? null);
-        setStep(migrateDraftStep(draft.step, draft));
+        setStep(
+          draft.appointmentId ? 5 : migrateDraftStep(draft.step, draft)
+        );
       } else if (preselectedPsychologistId && psychologists.some((p) => p.id === preselectedPsychologistId)) {
         setPsychologistId(preselectedPsychologistId);
         setStep(1);
@@ -615,6 +649,9 @@ export function BookingWizard({
   }
 
   const { morning, afternoon } = groupSlotsByPeriod(slots);
+  const dateIsClosed = Boolean(
+    selectedDate && !isClinicWorkingDate(selectedDate, workingDays)
+  );
 
   return (
     <div className="space-y-8 sm:space-y-10">
@@ -699,14 +736,22 @@ export function BookingWizard({
           <div className="mx-auto max-w-2xl space-y-8">
             <BookingScheduleSummary psychologist={psychologist} service={service} />
 
-            <BookingScheduleCalendar
-              availableDates={availableDates}
-              selectedDate={selectedDate}
-              onSelectDate={handleDateSelect}
-              loading={loadingDates}
-            />
+            <div className="space-y-3">
+              <BookingScheduleCalendar
+                availableDates={availableDates}
+                selectedDate={selectedDate}
+                onSelectDate={handleDateSelect}
+                loading={loadingDates}
+              />
+              {dateIsClosed && selectedDate && (
+                <BookingClinicClosedNotice
+                  selectedDate={selectedDate}
+                  workingDays={workingDays}
+                />
+              )}
+            </div>
 
-            {selectedDate && (
+            {selectedDate && !dateIsClosed && (
               <div
                 ref={timeSlotsRef}
                 className={cn(
@@ -731,9 +776,7 @@ export function BookingWizard({
                   </div>
                 ) : slots.length === 0 ? (
                   <p className={cn(type.bodyMuted, "text-center sm:text-left")}>
-                    {clinicClosedDateMessage(selectedDate, workingDays)
-                      ? "The clinic is closed on this day."
-                      : "No available times for this date. Try another day."}
+                    No available times for this date. Try another day.
                   </p>
                 ) : (
                   <div className="space-y-8">

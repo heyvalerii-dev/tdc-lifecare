@@ -5,8 +5,8 @@ import {
   CHECKOUT_START_ERROR,
   PAYMENT_POLL_TIMEOUT_MESSAGE,
   pollPaymentStatus,
-  startCheckout,
 } from "@/lib/payments/client";
+import { startCheckoutIfAwaiting, bookingResumeUnavailableMessage } from "@/lib/booking-resume";
 
 export type CheckoutPhase =
   | "idle"
@@ -90,13 +90,30 @@ export function useCheckoutPayment({
     setError(null);
 
     try {
-      const { checkoutUrl } = await startCheckout({
+      const outcome = await startCheckoutIfAwaiting({
         appointmentId,
         returnTo,
       });
+
+      if (!outcome.started) {
+        if (outcome.action.type === "redirect_to_appointment") {
+          await onConfirmedRef.current(appointmentId);
+          setPhase("idle");
+          return;
+        }
+
+        const reason =
+          outcome.action.type === "unavailable"
+            ? outcome.action.reason
+            : "not_found";
+        setPhase("error");
+        setError(bookingResumeUnavailableMessage(reason));
+        return;
+      }
+
       // TEMP: redirect happens here (not window.location.href)
-      console.log("Redirecting to:", checkoutUrl);
-      window.location.assign(checkoutUrl);
+      console.log("Redirecting to:", outcome.result.checkoutUrl);
+      window.location.assign(outcome.result.checkoutUrl);
     } catch {
       setPhase("error");
       setError(CHECKOUT_START_ERROR);

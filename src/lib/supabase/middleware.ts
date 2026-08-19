@@ -39,6 +39,7 @@ export async function updateSession(request: NextRequest) {
     "/book",
     "/preview-login",
     "/test/loading",
+    "/test/clinic-closed",
   ];
   const isPublicPath =
     publicPaths.includes(path) ||
