@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  CLINIC_CLOSED_BOOKING_HEADING,
+  CLINIC_CLOSED_BOOKING_SUPPORT_TEXT,
   CLINIC_CLOSED_CREATE_HINT,
   DEFAULT_CLINIC_WORKING_DAYS,
-  clinicClosedBookingSupportText,
   clinicClosedDateMessage,
   isClinicWorkingDate,
 } from "@/lib/clinic-working-days";
@@ -45,22 +46,9 @@ describe("Clinic closed days — mobile Agenda / booking regression", () => {
     expect(clinicClosedDateMessage(TUESDAY)).toBeNull();
   });
 
-  it("phrases booking closed-day copy from configured working days", () => {
-    expect(
-      clinicClosedBookingSupportText(MONDAY, [...DEFAULT_CLINIC_WORKING_DAYS])
-    ).toBe(
-      "The clinic is closed on Sundays and Mondays. Please choose another day to see available appointment times."
-    );
-    expect(
-      clinicClosedBookingSupportText("2026-07-19", [1, 2, 3, 4, 5, 6])
-    ).toBe(
-      "The clinic is closed on Sundays. Please choose another day to see available appointment times."
-    );
-    expect(
-      clinicClosedBookingSupportText(MONDAY, [3, 4, 5, 6])
-    ).toBe(
-      "The clinic is closed on Sundays, Mondays, and Tuesdays. Please choose another day to see available appointment times."
-    );
+  it("keeps booking closed-day copy compact", () => {
+    expect(CLINIC_CLOSED_BOOKING_HEADING).toBe("Clinic closed.");
+    expect(CLINIC_CLOSED_BOOKING_SUPPORT_TEXT).toBe("Try a different day.");
   });
 
   it("rejects booking on Monday even when the psychologist has Monday hours", () => {

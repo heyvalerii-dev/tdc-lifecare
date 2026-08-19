@@ -42,6 +42,7 @@ interface BookingScheduleCalendarProps {
   selectedDate: string | null;
   onSelectDate: (date: string) => void;
   loading?: boolean;
+  className?: string;
 }
 
 export function BookingScheduleCalendar({
@@ -49,6 +50,7 @@ export function BookingScheduleCalendar({
   selectedDate,
   onSelectDate,
   loading = false,
+  className,
 }: BookingScheduleCalendarProps) {
   const clinicToday = getClinicToday();
   const availableSet = useMemo(() => new Set(availableDates), [availableDates]);
@@ -80,7 +82,12 @@ export function BookingScheduleCalendar({
   }
 
   return (
-    <div className="rounded-2xl border border-[var(--brand-border)] bg-white p-5 shadow-[0_4px_24px_rgba(93,80,122,0.06)] sm:p-6">
+    <div
+      className={cn(
+        "h-fit w-full shrink-0 self-start rounded-2xl border border-[var(--brand-border)] bg-white p-5 shadow-[0_4px_24px_rgba(93,80,122,0.06)] sm:p-6",
+        className
+      )}
+    >
       <div className="mb-5 flex items-center justify-between gap-3">
         <button
           type="button"
@@ -123,7 +130,11 @@ export function BookingScheduleCalendar({
           <p className={type.bodyMuted}>No available dates for this service.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-7 gap-1" role="grid" aria-label="Appointment calendar">
+        <div
+          className="grid w-full grid-cols-7 content-start items-start gap-1"
+          role="grid"
+          aria-label="Appointment calendar"
+        >
           {gridDays.map((dateStr) => {
             const inViewMonth = dateStr.startsWith(viewMonth);
             const isPast = dateStr < clinicToday;
@@ -134,32 +145,36 @@ export function BookingScheduleCalendar({
             const dayNum = parseInt(dateStr.slice(8), 10);
 
             return (
-              <button
+              <div
                 key={dateStr}
-                type="button"
                 role="gridcell"
-                disabled={!isSelectable}
-                onClick={() => isSelectable && onSelectDate(dateStr)}
-                aria-label={dateStr}
                 aria-selected={isSelected}
-                className={cn(
-                  "relative flex aspect-square items-center justify-center rounded-xl text-sm font-medium transition-all",
-                  !inViewMonth && "pointer-events-none text-transparent",
-                  inViewMonth && !isSelectable && "cursor-not-allowed text-[var(--brand-text-muted)]/35",
-                  inViewMonth &&
-                    isSelectable &&
-                    !isSelected &&
-                    "text-[var(--brand-text)] hover:bg-[var(--brand-purple-light)]",
-                  isSelected && "bg-[var(--brand-purple)] text-white shadow-sm",
-                  isToday &&
-                    !isSelected &&
-                    isSelectable &&
-                    "ring-1 ring-[var(--brand-purple)]/40 ring-offset-1",
-                  isToday && !isSelectable && "ring-1 ring-[var(--brand-border)] ring-offset-1"
-                )}
+                className="relative aspect-square w-full min-w-0 self-start"
               >
-                {inViewMonth ? dayNum : ""}
-              </button>
+                <button
+                  type="button"
+                  disabled={!isSelectable}
+                  onClick={() => isSelectable && onSelectDate(dateStr)}
+                  aria-label={dateStr}
+                  className={cn(
+                    "absolute inset-0 flex items-center justify-center rounded-xl text-sm font-medium transition-colors",
+                    !inViewMonth && "pointer-events-none text-transparent",
+                    inViewMonth && !isSelectable && "cursor-not-allowed text-[var(--brand-text-muted)]/35",
+                    inViewMonth &&
+                      isSelectable &&
+                      !isSelected &&
+                      "text-[var(--brand-text)] hover:bg-[var(--brand-purple-light)]",
+                    isSelected && "bg-[var(--brand-purple)] text-white shadow-sm",
+                    isToday &&
+                      !isSelected &&
+                      isSelectable &&
+                      "ring-1 ring-[var(--brand-purple)]/40 ring-offset-1",
+                    isToday && !isSelectable && "ring-1 ring-[var(--brand-border)] ring-offset-1"
+                  )}
+                >
+                  {inViewMonth ? dayNum : ""}
+                </button>
+              </div>
             );
           })}
         </div>

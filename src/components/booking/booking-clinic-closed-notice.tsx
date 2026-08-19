@@ -2,23 +2,19 @@ import { Info } from "lucide-react";
 import { type } from "@/lib/typography";
 import { cn } from "@/lib/utils";
 import {
-  DEFAULT_CLINIC_WORKING_DAYS,
-  clinicClosedBookingSupportText,
+  CLINIC_CLOSED_BOOKING_HEADING,
+  CLINIC_CLOSED_BOOKING_SUPPORT_TEXT,
 } from "@/lib/clinic-working-days";
 
 interface BookingClinicClosedNoticeProps {
-  selectedDate: string;
+  selectedDate?: string;
   workingDays?: number[];
   className?: string;
 }
 
 export function BookingClinicClosedNotice({
-  selectedDate,
-  workingDays = [...DEFAULT_CLINIC_WORKING_DAYS],
   className,
 }: BookingClinicClosedNoticeProps) {
-  const supportText = clinicClosedBookingSupportText(selectedDate, workingDays);
-
   return (
     <div
       role="status"
@@ -36,10 +32,10 @@ export function BookingClinicClosedNotice({
         </span>
         <div className="min-w-0 space-y-1">
           <p className={cn(type.label, "text-[var(--brand-purple)]")}>
-            Clinic closed
+            {CLINIC_CLOSED_BOOKING_HEADING}
           </p>
           <p className={cn(type.smallMuted, "font-normal leading-relaxed")}>
-            {supportText}
+            {CLINIC_CLOSED_BOOKING_SUPPORT_TEXT}
           </p>
         </div>
       </div>

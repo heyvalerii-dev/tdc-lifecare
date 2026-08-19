@@ -84,42 +84,6 @@ export function thisClinicClosedDateMessage(
   return thisClinicClosedOnDayMessage(dayOfWeek);
 }
 
-function pluralWeekday(dayOfWeek: number): string {
-  const name = DAY_NAMES[dayOfWeek] ?? "this day";
-  return name === "this day" ? name : `${name}s`;
-}
+export const CLINIC_CLOSED_BOOKING_HEADING = "Clinic closed.";
 
-function joinNaturalList(items: string[]): string {
-  if (items.length === 0) return "this day";
-  if (items.length === 1) return items[0];
-  if (items.length === 2) return `${items[0]} and ${items[1]}`;
-  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
-}
-
-/** Closed weekdays from clinic working-days config, Sunday → Saturday. */
-export function getClinicClosedWeekdays(
-  workingDays: number[] = [...DEFAULT_CLINIC_WORKING_DAYS]
-): number[] {
-  return [0, 1, 2, 3, 4, 5, 6].filter((day) => !workingDays.includes(day));
-}
-
-/**
- * Booking calendar supporting copy, e.g.
- * "The clinic is closed on Mondays. Please choose another day…"
- * or "The clinic is closed on Sundays and Mondays. …"
- */
-export function clinicClosedBookingSupportText(
-  date: string | Date,
-  workingDays: number[] = [...DEFAULT_CLINIC_WORKING_DAYS]
-): string {
-  const closedWeekdays = getClinicClosedWeekdays(workingDays);
-  const selectedDay =
-    typeof date === "string"
-      ? getDayOfWeekInClinic(clinicDateToUtc(date, "12:00"))
-      : getDayOfWeekInClinic(date);
-
-  const daysToName =
-    closedWeekdays.length > 0 ? closedWeekdays : [selectedDay];
-  const phrase = joinNaturalList(daysToName.map(pluralWeekday));
-  return `The clinic is closed on ${phrase}. Please choose another day to see available appointment times.`;
-}
+export const CLINIC_CLOSED_BOOKING_SUPPORT_TEXT = "Try a different day.";

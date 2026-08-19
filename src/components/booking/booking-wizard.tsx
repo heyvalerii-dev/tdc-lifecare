@@ -727,16 +727,16 @@ export function BookingWizard({
       )}
 
       {step === 2 && psychologist && service && (
-        <div className="space-y-8">
+        <div className="flex flex-col gap-8">
           <BookingStepIntro
             title="Choose a date & time"
             description="Pick an available appointment slot."
             currentStep={progressStep}
           />
-          <div className="mx-auto max-w-2xl space-y-8">
+          <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
             <BookingScheduleSummary psychologist={psychologist} service={service} />
 
-            <div className="space-y-3">
+            <div className="flex w-full shrink-0 flex-col gap-3">
               <BookingScheduleCalendar
                 availableDates={availableDates}
                 selectedDate={selectedDate}
